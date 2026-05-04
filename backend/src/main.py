@@ -46,8 +46,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SupoClip API",
-    description="Python-based backend for SupoClip",
+    title="KlipOS API",
+    description="KlipOS Python backend",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -60,9 +60,9 @@ app.add_middleware(
     allow_headers=[
         "Content-Type",
         "Authorization",
-        "x-supoclip-user-id",
-        "x-supoclip-ts",
-        "x-supoclip-signature",
+        "x-klipos-user-id",
+        "x-klipos-ts",
+        "x-klipos-signature",
         "user_id",
     ],
 )
@@ -83,7 +83,7 @@ def _resolve_uploaded_video_path(url: str) -> Path:
 @app.get("/")
 def read_root():
     return {
-        "message": "This is the SupoClip FastAPI-based API. Visit /docs for the API documentation."
+        "message": "This is the KlipOS FastAPI-based API. Visit /docs for the API documentation."
     }
 
 

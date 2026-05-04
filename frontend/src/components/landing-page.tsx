@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { isLandingOnlyModeEnabled } from "@/lib/app-flags";
 
-const HOSTED_APP_URL = "https://supoclip.com";
+const HOSTED_APP_URL = "http://localhost:3000";
 
 function ScrollReveal({
   children,
@@ -137,7 +137,7 @@ function getPlans() {
         "Full source code access",
       ],
       cta: "View on GitHub",
-      ctaHref: "https://github.com/FujiwaraChoki/supoclip",
+      ctaHref: "https://github.com/azizsiberu/klipos",
       highlighted: false,
       isUnlimited: false,
     },
@@ -212,7 +212,7 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <Image
               src="/logo.png"
-              alt="SupoClip"
+              alt="KlipOS"
               width={24}
               height={24}
               className="rounded-lg transition-transform group-hover:scale-105"
@@ -224,7 +224,7 @@ export default function LandingPage() {
                   "var(--font-syne), var(--font-geist-sans), system-ui",
               }}
             >
-              SupoClip
+              KlipOS
             </span>
           </Link>
 
@@ -420,7 +420,7 @@ export default function LandingPage() {
                   </a>
                 )}
                 <a
-                  href="https://github.com/FujiwaraChoki/supoclip"
+                  href="https://github.com/azizsiberu/klipos"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -785,13 +785,13 @@ export default function LandingPage() {
                     <span className="opacity-50">$</span>{" "}
                     git clone{" "}
                     <span className="opacity-40">
-                      https://github.com/FujiwaraChoki/supoclip
+                      https://github.com/azizsiberu/klipos
                     </span>
                   </div>
                   <div>
                     <span className="opacity-50">$</span>{" "}
                     cd{" "}
-                    <span className="opacity-40">supoclip</span>
+                    <span className="opacity-40">klipos</span>
                   </div>
                   <div>
                     <span className="opacity-50">$</span>{" "}
@@ -801,7 +801,7 @@ export default function LandingPage() {
 
                 <div className="flex flex-wrap gap-3 mt-6">
                   <a
-                    href="https://github.com/FujiwaraChoki/supoclip"
+                    href="https://github.com/azizsiberu/klipos"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -873,7 +873,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Image
               src="/logo.png"
-              alt="SupoClip"
+              alt="KlipOS"
               width={24}
               height={24}
               className="rounded-md"
@@ -882,12 +882,12 @@ export default function LandingPage() {
               className="text-sm font-semibold"
               style={{ fontFamily: "var(--font-syne), system-ui" }}
             >
-              SupoClip
+              KlipOS
             </span>
           </div>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
             <a
-              href="https://github.com/FujiwaraChoki/supoclip"
+              href="https://github.com/azizsiberu/klipos"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors"

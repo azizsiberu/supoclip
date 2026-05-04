@@ -72,7 +72,7 @@ class Config:
         )
         self.resend_api_key = self._get_optional_env("RESEND_API_KEY")
         self.resend_from_email = os.getenv(
-            "RESEND_FROM_EMAIL", "SupoClip <onboarding@resend.dev>"
+            "RESEND_FROM_EMAIL", "KlipOS <onboarding@resend.dev>"
         )
         self.app_base_url = (
             self._get_optional_env("NEXT_PUBLIC_APP_URL") or "http://localhost:3000"

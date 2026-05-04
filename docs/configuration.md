@@ -1,6 +1,6 @@
 # Configuration
 
-This guide explains the important environment variables used by SupoClip and how they affect behavior.
+This guide explains the important environment variables used by KlipOS and how they affect behavior.
 
 Most settings are sourced from `.env.example`, `docker-compose.yml`, and the backend configuration code in `backend/src/config.py`.
 
@@ -50,12 +50,12 @@ The backend can infer a default LLM from whichever API key is present, but setti
 
 ## Analytics Settings
 
-SupoClip can send pageviews and custom product events to DataFast from the `frontend` app.
+KlipOS can send pageviews and custom product events to DataFast from the `frontend` app.
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_DATAFAST_WEBSITE_ID` | unset | Public DataFast website ID used by the tracking script |
-| `NEXT_PUBLIC_DATAFAST_DOMAIN` | unset | Root domain tracked by DataFast, for example `supoclip.com` |
+| `NEXT_PUBLIC_DATAFAST_DOMAIN` | unset | Root domain tracked by DataFast, for example `klipos.localhost:3000` |
 | `NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST` | `false` | Enables local tracking on `localhost` when explicitly set to `true` |
 
 ### DataFast behavior
@@ -157,7 +157,7 @@ Required when `SELF_HOST=false` and you want subscription management:
 
 ## Apify YouTube Downloader
 
-SupoClip uses Apify's `epctex/youtube-video-downloader` actor as the primary YouTube download path. Metadata preflight and fallback downloads rely on the local `yt-dlp` stack over a direct connection.
+KlipOS uses Apify's `epctex/youtube-video-downloader` actor as the primary YouTube download path. Metadata preflight and fallback downloads rely on the local `yt-dlp` stack over a direct connection.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -245,7 +245,7 @@ STRIPE_SECRET_KEY=your_key
 STRIPE_WEBHOOK_SECRET=your_key
 STRIPE_PRICE_ID=price_xxx
 RESEND_API_KEY=your_key
-RESEND_FROM_EMAIL="SupoClip <onboarding@your-domain.com>"
+RESEND_FROM_EMAIL="KlipOS <onboarding@your-domain.com>"
 ```
 
 ## Related Reading

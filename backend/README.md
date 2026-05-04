@@ -63,7 +63,7 @@ Set these env vars when using hosted billing:
 
 ```
 RESEND_API_KEY=your_resend_api_key
-RESEND_FROM_EMAIL="SupoClip <onboarding@your-domain.com>"
+RESEND_FROM_EMAIL="KlipOS <onboarding@your-domain.com>"
 ```
 
 Notes:

@@ -1,6 +1,6 @@
-# SupoClip Quick Start Guide
+# KlipOS Quick Start Guide
 
-Run SupoClip with Docker in just one command!
+Run KlipOS with Docker in just one command!
 
 ## Prerequisites
 
@@ -48,10 +48,10 @@ LLM=openai:gpt-4
 # Optional: Resend for waitlist + subscription lifecycle emails
 # Required if you want hosted billing emails when SELF_HOST=false
 # RESEND_API_KEY=your_resend_api_key_here
-# RESEND_FROM_EMAIL="SupoClip <onboarding@your-domain.com>"
+# RESEND_FROM_EMAIL="KlipOS <onboarding@your-domain.com>"
 ```
 
-### 2. Start SupoClip
+### 2. Start KlipOS
 
 ```bash
 ./start.sh
@@ -101,7 +101,7 @@ docker-compose up -d --build
 | `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | For local/self-hosted Ollama endpoint |
 | `OLLAMA_API_KEY` | - | Optional, required for Ollama Cloud |
 | `RESEND_API_KEY` | - | Optional in self-host mode, required for hosted billing/waitlist emails |
-| `RESEND_FROM_EMAIL` | `SupoClip <onboarding@resend.dev>` | Verified sender for backend subscription emails |
+| `RESEND_FROM_EMAIL` | `KlipOS <onboarding@resend.dev>` | Verified sender for backend subscription emails |
 
 ### Hosted Billing Email Setup
 
@@ -188,7 +188,7 @@ docker-compose up -d
 
 ## Architecture
 
-SupoClip runs 4 Docker containers:
+KlipOS runs 4 Docker containers:
 
 1. **Frontend** (Next.js 15) - Port 3000
 2. **Backend** (FastAPI + Python) - Port 8000

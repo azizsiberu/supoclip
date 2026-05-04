@@ -39,22 +39,22 @@ const shouldTrackLocalhost = process.env.NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST ==
 const isDataFastEnabled = Boolean(dataFastWebsiteId && dataFastDomain);
 
 export const metadata: Metadata = {
-  title: "SupoClip",
-  description: "Turn long videos into viral-ready shorts.",
+  title: "KlipOS",
+  description: "The operating system for vertical automation.",
   metadataBase: getMetadataBase(),
   icons: {
     icon: "/icon.png",
   },
   openGraph: {
-    title: "SupoClip",
-    description: "Turn long videos into viral-ready shorts.",
-    siteName: "SupoClip",
+    title: "KlipOS",
+    description: "The operating system for vertical automation.",
+    siteName: "KlipOS",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SupoClip",
-    description: "Turn long videos into viral-ready shorts.",
+    title: "KlipOS",
+    description: "The operating system for vertical automation.",
   },
 };
 

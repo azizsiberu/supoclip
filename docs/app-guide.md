@@ -1,10 +1,10 @@
 # App Guide
 
-This guide explains the visible parts of SupoClip and the main user flows.
+This guide explains the visible parts of KlipOS and the main user flows.
 
 ## Product Summary
 
-SupoClip turns long-form videos into short clips. Users can:
+KlipOS turns long-form videos into short clips. Users can:
 
 - Submit a YouTube URL
 - Upload a video file
@@ -122,7 +122,7 @@ The page also loads billing summary data so the user can see plan and usage info
 - `/sign-in`
 - `/sign-up`
 
-SupoClip uses Better Auth with an email and password flow backed by PostgreSQL through Prisma.
+KlipOS uses Better Auth with an email and password flow backed by PostgreSQL through Prisma.
 
 If `DISABLE_SIGN_UP=true`, sign-up is disabled for new users.
 
