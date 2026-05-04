@@ -1,47 +1,35 @@
-# Fuck OpusClip.
+# KlipOS
 
-... because good video clips shouldn't come with ugly watermarks or platform lock-in.
+> **The operating system for vertical automation.**
 
 <p align="center">
-  <a href="https://www.supoclip.com">
-    <img src="assets/banner.png" alt="SupoClip Banner" width="100%" />
-  </a>
+  <img src="assets/banner.png" alt="KlipOS Banner" width="100%" />
 </p>
 
-SupoClip gives you AI-powered video clipping capabilities in an open-source package you can run yourself, customize, and inspect. Use the hosted version when you want the convenience of managed infrastructure, or self-host when you want full control.
+KlipOS is a high-performance, open-source AI video clipping framework built to reframe, crop, and optimize long-form content for vertical platforms. Built for developers who need precision at scale — run it yourself, extend it, and keep full control of your content and workflows.
 
-> For the hosted version, sign up for the waitlist here: [SupoClip Hosted](https://www.supoclip.com)
+## Why KlipOS Exists
 
-## Why SupoClip Exists
+### The Problem with Closed Platforms
 
-### The OpusClip Problem
-
-OpusClip is undeniably powerful. It's an AI video clipping tool that can turn long-form content into viral short clips with features like:
-
-- AI-powered clip generation from long videos
-- Automated captions with 97%+ accuracy
-- Virality scoring to predict viral potential
-- Multi-language support (20+ languages)
-- Brand templates and customization
-
-**But here's the catch:**
+Tools like OpusClip are powerful for turning long-form content into viral short clips, but they come with trade-offs that matter at scale:
 
 - **Usage limits**: Processing minutes are capped by plan
 - **Watermarks**: Some exports can include platform branding
-- **Processing limits**: Even paid plans have strict minute limits
 - **Vendor lock-in**: Your content and workflows are tied to their platform
+- **No customization**: You can't modify the pipeline to fit your needs
 
-### The SupoClip Solution
+KlipOS is the open-source alternative — same core capabilities, full developer control.
 
-SupoClip provides the same core functionality with more control:
+### The KlipOS Solution
+
+KlipOS provides the same core functionality with more control:
 
 → ✅ **Self-Hostable** - Run it on your own infrastructure
 
 → ✅ **No Watermarks** - Your content stays yours
 
 → ✅ **Open Source** - Full transparency, community-driven development
-
-→ ✅ **Hosted Option** - Use SupoClip without managing servers
 
 → ✅ **Unlimited Usage** - Process as many videos as your hardware can handle
 
@@ -58,8 +46,8 @@ SupoClip provides the same core functionality with more control:
 ### 1. Clone and Configure
 
 ```bash
-git clone https://github.com/FujiwaraChoki/supoclip.git
-cd supoclip
+git clone https://github.com/azizsiberu/klipos.git
+cd klipos
 ```
 
 Create a `.env` file in the root directory:
@@ -185,7 +173,7 @@ If you enable DataFast, also verify that:
 
 ## Testing
 
-SupoClip now has a layered automated test setup:
+KlipOS now has a layered automated test setup:
 
 - `pytest` for backend unit and integration tests
 - `Vitest` and Testing Library for frontend route and component coverage
@@ -227,7 +215,7 @@ Start with:
 
 ## Hosted Billing Emails
 
-When you run SupoClip with monetization enabled (`SELF_HOST=false`), subscription lifecycle emails are sent through Resend by the backend:
+When you run KlipOS with monetization enabled (`SELF_HOST=false`), subscription lifecycle emails are sent through Resend by the backend:
 
 - `checkout.session.completed` sends the thank-you-for-subscribing email
 - `customer.subscription.deleted` sends the sorry-to-see-you-go email
@@ -247,4 +235,4 @@ See [CLAUDE.md](CLAUDE.md) for detailed development instructions.
 
 ## License
 
-SupoClip is released under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
+KlipOS is released under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.

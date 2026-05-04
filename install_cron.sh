@@ -6,10 +6,10 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CRON_DIR="$REPO_DIR/.cron"
 UPDATER_SCRIPT="$CRON_DIR/update_and_restart.sh"
 LOG_FILE="$REPO_DIR/cron_update.log"
-LOCK_FILE="/tmp/supoclip_auto_update.lock"
+LOCK_FILE="/tmp/klipos_auto_update.lock"
 
-CRON_TAG_START="# supoclip-auto-update-start"
-CRON_TAG_END="# supoclip-auto-update-end"
+CRON_TAG_START="# klipos-auto-update-start"
+CRON_TAG_END="# klipos-auto-update-end"
 CRON_SCHEDULE="0 */3 * * *"
 
 mkdir -p "$CRON_DIR"
