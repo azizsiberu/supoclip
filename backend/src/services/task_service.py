@@ -148,6 +148,7 @@ class TaskService:
         should_cancel: Optional[Callable] = None,
         clip_ready_callback: Optional[Callable] = None,
         cleanup_settings: Optional[Dict[str, Any]] = None,
+        user_plan: str = "free",
     ) -> Dict[str, Any]:
         """
         Process a task: download video, analyze, create clips.
@@ -215,6 +216,7 @@ class TaskService:
                 cached_analysis_json=cached_analysis_json,
                 progress_callback=update_progress,
                 should_cancel=should_cancel,
+                user_plan=user_plan,
             )
             stage_timings["pipeline_seconds"] = round(
                 perf_counter() - pipeline_start, 3

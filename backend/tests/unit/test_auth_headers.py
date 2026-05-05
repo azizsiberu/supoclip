@@ -40,9 +40,9 @@ def test_get_signed_user_id_rejects_expired_signature():
     config.auth_signature_ttl_seconds = 1
     request = _build_request(
         {
-            "x-supoclip-user-id": "user-1",
-            "x-supoclip-ts": str(int(time.time()) - 10),
-            "x-supoclip-signature": "invalid",
+            "x-klipos-user-id": "user-1",
+            "x-klipos-ts": str(int(time.time()) - 10),
+            "x-klipos-signature": "invalid",
         }
     )
 
@@ -58,7 +58,7 @@ def test_get_authenticated_user_id_allows_unsigned_fallback_when_enabled():
     config.allow_unsigned_backend_auth = True
 
     user_id = get_authenticated_user_id(
-        _build_request({"x-supoclip-user-id": "user-1"}),
+        _build_request({"x-klipos-user-id": "user-1"}),
         config,
     )
 
@@ -74,9 +74,9 @@ def test_get_authenticated_user_id_keeps_rejecting_bad_signed_headers():
         get_authenticated_user_id(
             _build_request(
                 {
-                    "x-supoclip-user-id": "user-1",
-                    "x-supoclip-ts": str(int(time.time())),
-                    "x-supoclip-signature": "invalid",
+                    "x-klipos-user-id": "user-1",
+                    "x-klipos-ts": str(int(time.time())),
+                    "x-klipos-signature": "invalid",
                 }
             ),
             config,
@@ -95,9 +95,9 @@ def test_get_authenticated_user_id_accepts_valid_signed_headers():
     user_id = get_authenticated_user_id(
         _build_request(
             {
-                "x-supoclip-user-id": "user-1",
-                "x-supoclip-ts": timestamp,
-                "x-supoclip-signature": signature,
+                "x-klipos-user-id": "user-1",
+                "x-klipos-ts": timestamp,
+                "x-klipos-signature": signature,
             }
         ),
         config,

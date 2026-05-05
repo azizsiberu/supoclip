@@ -121,8 +121,12 @@ class BillingService:
         status = row["subscription_status"]
         is_paid = plan == "pro" and status in {"active", "trialing"}
 
-        # Hosted mode requires an active/trialing paid subscription.
         if not is_paid:
+            usage_limit = self.config.free_plan_task_limit
+            unlimited = usage_limit <= 0
+            can_create = unlimited or usage_count < usage_limit
+            remaining = None if unlimited else max(usage_limit - usage_count, 0)
+            reason = None if can_create else "Free plan usage limit reached. Active subscription required"
             return {
                 "monetization_enabled": True,
                 "plan": plan,
@@ -131,18 +135,18 @@ class BillingService:
                 "period_end": end,
                 "trial_ends_at": row.get("trial_ends_at"),
                 "usage_count": usage_count,
-                "usage_limit": None,
-                "remaining": None,
-                "can_create_task": False,
-                "upgrade_required": True,
-                "reason": "Active subscription required",
+                "usage_limit": None if unlimited else usage_limit,
+                "remaining": remaining,
+                "can_create_task": can_create,
+                "upgrade_required": not can_create,
+                "reason": reason,
             }
 
         usage_limit = self.config.pro_plan_task_limit
         unlimited = usage_limit <= 0
         can_create = unlimited or usage_count < usage_limit
         remaining = None if unlimited else max(usage_limit - usage_count, 0)
-        reason = None if can_create else "Plan usage limit reached"
+        reason = None if can_create else "Pro plan usage limit reached"
 
         return {
             "monetization_enabled": True,
