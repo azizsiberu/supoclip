@@ -309,6 +309,7 @@ class VideoService:
         cached_analysis_json: Optional[str] = None,
         progress_callback: Optional[Callable[[int, str, str], Awaitable[None]]] = None,
         should_cancel: Optional[Callable[[], Awaitable[bool]]] = None,
+        user_plan: str = "free",
     ) -> Dict[str, Any]:
         """
         Complete video processing pipeline.
@@ -326,15 +327,18 @@ class VideoService:
             if progress_callback:
                 await progress_callback(10, "Downloading video...", "processing")
 
+            allowed_max_duration = 600 if user_plan == "free" else runtime_config.max_video_duration
+
             if source_type == "youtube":
                 video_info = await async_get_youtube_video_info(url, task_id=task_id)
                 if video_info:
                     duration = video_info.get("duration", 0)
-                    if duration and duration > runtime_config.max_video_duration:
-                        mins = runtime_config.max_video_duration // 60
+                    if duration and duration > allowed_max_duration:
+                        mins = allowed_max_duration // 60
+                        plan_message = " on Free plan" if user_plan == "free" else ""
                         raise Exception(
                             f"Video is too long ({duration // 60} min). "
-                            f"Maximum allowed duration is {mins} minutes."
+                            f"Maximum allowed duration{plan_message} is {mins} minutes."
                         )
 
                 video_path = await VideoService.download_video(url, task_id=task_id)
@@ -347,11 +351,12 @@ class VideoService:
 
             # Post-download duration guard (catches cases where preflight info was unavailable)
             file_duration = VideoService._get_file_duration(video_path)
-            if file_duration and file_duration > runtime_config.max_video_duration:
-                mins = runtime_config.max_video_duration // 60
+            if file_duration and file_duration > allowed_max_duration:
+                mins = allowed_max_duration // 60
+                plan_message = " on Free plan" if user_plan == "free" else ""
                 raise Exception(
                     f"Video is too long ({int(file_duration) // 60} min). "
-                    f"Maximum allowed duration is {mins} minutes."
+                    f"Maximum allowed duration{plan_message} is {mins} minutes."
                 )
 
             # Step 2: Generate transcript
@@ -434,7 +439,9 @@ class VideoService:
                         }
                     )
 
-            if processing_mode == "fast":
+            if user_plan == "free":
+                segments_json = segments_json[:3]
+            elif processing_mode == "fast":
                 segments_json = segments_json[: runtime_config.fast_mode_max_clips]
 
             return {

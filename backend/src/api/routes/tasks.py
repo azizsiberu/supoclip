@@ -208,6 +208,12 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
         billing_service = BillingService(db)
         await billing_service.assert_can_create_task(user_id)
 
+        billing_summary = await billing_service.get_usage_summary(user_id)
+        user_plan = billing_summary.get("plan", "free")
+
+        if user_plan == "free":
+            include_broll = False
+
         task_service = TaskService(db)
 
         # Create task
@@ -245,6 +251,7 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
             output_format,
             add_subtitles,
             cleanup_settings,
+            user_plan,
         )
 
         # Save source metadata for resume/retries in environments without sources.url column
@@ -915,6 +922,10 @@ async def resume_task(
             task.get("processing_mode") or runtime_config.default_processing_mode
         )
 
+        billing_service = BillingService(db)
+        billing_summary = await billing_service.get_usage_summary(user_id)
+        user_plan = billing_summary.get("plan", "free")
+
         job_id = await JobQueue.enqueue_processing_job(
             "process_video_task",
             processing_mode,
@@ -930,6 +941,7 @@ async def resume_task(
             output_format,
             add_subtitles,
             cleanup_settings,
+            user_plan,
         )
 
         return {"message": "Task resumed", "job_id": job_id}
