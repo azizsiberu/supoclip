@@ -12,6 +12,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.providers.ollama import OllamaProvider
+from pydantic_ai.settings import ModelSettings
 from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from .config import Config, get_config
@@ -245,7 +246,17 @@ SCORING AND OUTPUT RULES:
 - virality_reasoning and reasoning should cite what is actually present in the chosen span
 - summary and key_topics must also stay grounded in the transcript and should not add outside interpretation
 
-Find 3-7 compelling segments that would work well as standalone clips. Quality over quantity: choose segments that are accurate, self-contained, have proper time ranges, and score high on virality metrics."""
+Find 3-7 compelling segments that would work well as standalone clips. Quality over quantity: choose segments that are accurate, self-contained, have proper time ranges, and score high on virality metrics.
+
+STRUCTURED OUTPUT (MANDATORY — READ BEFORE RESPONDING):
+The pipeline parses your reply as JSON only. Do not write analysis as prose, markdown, or bullet essays.
+- Output exactly one JSON object. The first non-whitespace character MUST be "{" and the last non-whitespace character MUST be "}".
+- Do NOT wrap JSON in markdown code fences (no triple backticks). Do NOT add headings, preambles ("I can see…", "Let me analyze…"), or any text after the JSON.
+- Top-level keys: "most_relevant_segments" (array), "summary" (string), "key_topics" (array of strings). Include "broll_opportunities" only when the user prompt asks for B-roll.
+- Each element of "most_relevant_segments" must include: "start_time", "end_time", "text", "relevance_score", "reasoning", and "virality" with integer subscores "hook_score", "engagement_score", "value_score", "shareability_score" (each 0-25), "total_score" (0-100, sum of those four), "hook_type", and "virality_reasoning"."""
+
+TRANSCRIPT_USER_JSON_REMINDER = """
+OUTPUT FORMAT: Reply with raw JSON only — one object starting with { and ending with }. No markdown fences, no commentary before or after the JSON."""
 
 # Lazy-loaded agent to avoid import-time failures when API keys aren't set
 _transcript_agent: Optional[Agent[None, TranscriptAnalysis]] = None
@@ -315,12 +326,14 @@ def _build_transcript_model(runtime_config: Config) -> Model | str:
             "Use the format ollama:<model>, for example ollama:gpt-oss:20b."
         )
 
+    ollama_settings: ModelSettings = {"temperature": 0}
     return OllamaModel(
         provider_model_name,
         provider=OllamaProvider(
             base_url=runtime_config.resolve_ollama_base_url(),
             api_key=runtime_config.ollama_api_key,
         ),
+        settings=ollama_settings,
     )
 
 
@@ -328,7 +341,6 @@ def get_transcript_agent() -> Agent[None, TranscriptAnalysis]:
     """Get or create the transcript analysis agent (lazy initialization)."""
     global _transcript_agent, _transcript_agent_signature
     runtime_config = get_config()
-    provider, _ = _split_llm_name(runtime_config.llm)
     signature = (
         runtime_config.llm,
         runtime_config.openai_api_key,
@@ -347,10 +359,10 @@ def get_transcript_agent() -> Agent[None, TranscriptAnalysis]:
             model=_build_transcript_model(runtime_config),
             output_type=TranscriptAnalysis,
             system_prompt=transcript_analysis_system_prompt,
-            # Some local Ollama/OpenAI-compatible endpoints reject the structured
-            # retry message as content:null. The schema accepts common local
-            # model omissions, so prefer validating the first response directly.
-            output_retries=0 if provider == "ollama" else 2,
+            # Local models often return markdown or prose first; retries let the
+            # framework ask again for schema-valid JSON. If your Ollama build
+            # errors on retry payloads, pin pydantic-ai / Ollama or lower retries.
+            output_retries=2,
         )
         _transcript_agent_signature = signature
     return _transcript_agent
@@ -388,7 +400,7 @@ Critical accuracy requirements:
 - Do not reject or penalize a segment simply because of the subject matter; stay content-neutral and assess clip quality only.
 
 Transcript:
-{transcript}"""
+{transcript}{TRANSCRIPT_USER_JSON_REMINDER}"""
 
 
 async def get_most_relevant_parts_by_transcript(

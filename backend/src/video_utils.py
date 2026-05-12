@@ -332,6 +332,16 @@ def detect_optimal_crop_region(
         # Try improved face detection
         face_centers = detect_faces_in_clip(video_clip, start_time, end_time)
 
+        # Haar / weak detectors can return huge lists; keep the strongest few so the
+        # weighted center tracks the main subject instead of noise.
+        max_centers_for_crop = 24
+        if len(face_centers) > max_centers_for_crop:
+            face_centers = sorted(
+                face_centers,
+                key=lambda t: t[2] * t[3],
+                reverse=True,
+            )[:max_centers_for_crop]
+
         # Calculate crop position
         if face_centers:
             # Use weighted average of face centers with temporal consistency
@@ -426,6 +436,26 @@ def detect_optimal_crop_region(
         return (x_offset, y_offset, new_width, new_height)
 
 
+def _resolve_opencv_dnn_face_model_paths() -> tuple[Optional[str], Optional[str]]:
+    """Return (model_pb, prototxt) for OpenCV DNN face detector if files exist."""
+    env_pb = (os.environ.get("OPENCV_FACE_DETECTOR_MODEL_PATH") or "").strip()
+    env_txt = (os.environ.get("OPENCV_FACE_DETECTOR_PROTO_PATH") or "").strip()
+    if env_pb and env_txt:
+        pb_path = Path(env_pb).expanduser()
+        txt_path = Path(env_txt).expanduser()
+        if pb_path.is_file() and txt_path.is_file():
+            return str(pb_path), str(txt_path)
+    prototxt_path = cv2.data.haarcascades.replace(
+        "haarcascades", "opencv_face_detector.pbtxt"
+    )
+    model_path = cv2.data.haarcascades.replace(
+        "haarcascades", "opencv_face_detector_uint8.pb"
+    )
+    if os.path.isfile(model_path) and os.path.isfile(prototxt_path):
+        return model_path, prototxt_path
+    return None, None
+
+
 def detect_faces_in_clip(
     video_clip: VideoFileClip, start_time: float, end_time: float
 ) -> List[Tuple[int, int, int, float]]:
@@ -436,16 +466,23 @@ def detect_faces_in_clip(
     face_centers = []
 
     try:
-        # Try to use MediaPipe (most accurate)
+        # Try to use MediaPipe legacy solutions API (still present on some wheels)
         mp_face_detection = None
         try:
             import mediapipe as mp
 
-            mp_face_detection = mp.solutions.face_detection.FaceDetection(
-                model_selection=0,  # 0 for short-range (better for close faces)
-                min_detection_confidence=0.5,
-            )
-            logger.info("Using MediaPipe face detector")
+            if hasattr(mp, "solutions") and hasattr(mp.solutions, "face_detection"):
+                mp_face_detection = mp.solutions.face_detection.FaceDetection(
+                    model_selection=0,  # 0 for short-range (better for close faces)
+                    min_detection_confidence=0.5,
+                )
+                logger.info("Using MediaPipe legacy face_detection")
+            else:
+                logger.info(
+                    "MediaPipe installed without legacy mp.solutions (typical for 0.10.31+); "
+                    "using OpenCV DNN/Haar. Optional: set OPENCV_FACE_DETECTOR_* paths — "
+                    "see backend/README.md."
+                )
         except ImportError:
             logger.info("MediaPipe not available, falling back to OpenCV")
         except Exception as e:
@@ -459,22 +496,12 @@ def detect_faces_in_clip(
         # Try to load DNN face detector (more accurate than Haar)
         dnn_net = None
         try:
-            # Load OpenCV's DNN face detector
-            prototxt_path = cv2.data.haarcascades.replace(
-                "haarcascades", "opencv_face_detector.pbtxt"
-            )
-            model_path = cv2.data.haarcascades.replace(
-                "haarcascades", "opencv_face_detector_uint8.pb"
-            )
-
-            # If DNN model files don't exist, we'll fall back to Haar cascade
-            import os
-
-            if os.path.exists(prototxt_path) and os.path.exists(model_path):
+            model_path, prototxt_path = _resolve_opencv_dnn_face_model_paths()
+            if model_path and prototxt_path:
                 dnn_net = cv2.dnn.readNetFromTensorflow(model_path, prototxt_path)
                 logger.info("OpenCV DNN face detector loaded as backup")
             else:
-                logger.info("OpenCV DNN face detector not available")
+                logger.info("OpenCV DNN face detector not available (missing model files)")
         except Exception:
             logger.info("OpenCV DNN face detector failed to load")
 
@@ -563,13 +590,13 @@ def detect_faces_in_clip(
 
                         faces = haar_cascade.detectMultiScale(
                             gray,
-                            scaleFactor=1.05,  # More sensitive
-                            minNeighbors=3,  # Less strict
-                            minSize=(40, 40),  # Smaller minimum size
+                            scaleFactor=1.08,
+                            minNeighbors=6,
+                            minSize=(72, 72),
                             maxSize=(
-                                int(width * 0.7),
-                                int(height * 0.7),
-                            ),  # Maximum size limit
+                                int(width * 0.5),
+                                int(height * 0.55),
+                            ),
                         )
 
                         for x, y, w, h in faces:
@@ -584,6 +611,13 @@ def detect_faces_in_clip(
                         logger.warning(
                             f"Haar cascade detection failed for frame at {sample_time}s: {e}"
                         )
+
+                if len(detected_faces) > 2:
+                    detected_faces.sort(
+                        key=lambda d: d[2] * d[3] * d[4],
+                        reverse=True,
+                    )
+                    detected_faces = detected_faces[:2]
 
                 # Process detected faces
                 for x, y, w, h, confidence in detected_faces:
@@ -641,11 +675,15 @@ def filter_face_outliers(
         std_x = np.std(x_positions)
         std_y = np.std(y_positions)
 
-        # Filter out faces that are more than 2 standard deviations away
+        # Tighter gate when many weak detections (e.g. Haar false positives)
+        n = len(face_centers)
+        sigma = 1.25 if n > 40 else (1.6 if n > 15 else 2.0)
+
+        # Filter out faces that are far from the median cluster
         filtered_faces = []
         for face in face_centers:
             x, y, area, conf = face
-            if abs(x - median_x) <= 2 * std_x and abs(y - median_y) <= 2 * std_y:
+            if abs(x - median_x) <= sigma * std_x and abs(y - median_y) <= sigma * std_y:
                 filtered_faces.append(face)
 
         logger.info(

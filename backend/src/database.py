@@ -31,11 +31,18 @@ class Base(DeclarativeBase):
 
 
 def _build_engine(database_url: str) -> AsyncEngine:
+    # Worker jobs hold one session for the full video pipeline; API traffic can run
+    # concurrently — use a slightly larger pool and longer checkout wait to avoid
+    # QueuePool timeouts under local dev (uvicorn + arq max_jobs > 1).
+    pool_size = int(os.getenv("DB_POOL_SIZE", "20"))
+    max_overflow = int(os.getenv("DB_MAX_OVERFLOW", "30"))
+    pool_timeout = float(os.getenv("DB_POOL_TIMEOUT", "60"))
     return create_async_engine(
         database_url,
         echo=False,
-        pool_size=10,
-        max_overflow=20,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+        pool_timeout=pool_timeout,
         pool_pre_ping=True,
         pool_recycle=3600,
     )
@@ -88,8 +95,10 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
-        finally:
-            await session.close()
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 # Initialize database

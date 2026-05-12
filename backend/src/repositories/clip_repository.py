@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text as sa_text
 from typing import List, Dict, Any, Optional
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -34,70 +35,75 @@ class ClipRepository:
         hook_type: Optional[str] = None,
     ) -> str:
         """Create a new clip record and return its ID."""
+        clip_id = str(uuid.uuid4())
+        params_full = {
+            "id": clip_id,
+            "task_id": task_id,
+            "filename": filename,
+            "file_path": file_path,
+            "start_time": start_time,
+            "end_time": end_time,
+            "duration": duration,
+            "text": text,
+            "relevance_score": relevance_score,
+            "reasoning": reasoning,
+            "clip_order": clip_order,
+            "virality_score": virality_score,
+            "hook_score": hook_score,
+            "engagement_score": engagement_score,
+            "value_score": value_score,
+            "shareability_score": shareability_score,
+            "hook_type": hook_type,
+        }
+        params_legacy = {
+            "id": clip_id,
+            "task_id": task_id,
+            "filename": filename,
+            "file_path": file_path,
+            "start_time": start_time,
+            "end_time": end_time,
+            "duration": duration,
+            "text": text,
+            "relevance_score": relevance_score,
+            "reasoning": reasoning,
+            "clip_order": clip_order,
+        }
         try:
             result = await db.execute(
                 sa_text("""
                     INSERT INTO generated_clips
-                    (task_id, filename, file_path, start_time, end_time, duration,
+                    (id, task_id, filename, file_path, start_time, end_time, duration,
                      text, relevance_score, reasoning, clip_order,
                      virality_score, hook_score, engagement_score, value_score, shareability_score, hook_type,
                      created_at)
                     VALUES
-                    (:task_id, :filename, :file_path, :start_time, :end_time, :duration,
+                    (:id, :task_id, :filename, :file_path, :start_time, :end_time, :duration,
                      :text, :relevance_score, :reasoning, :clip_order,
                      :virality_score, :hook_score, :engagement_score, :value_score, :shareability_score, :hook_type,
                      NOW())
                     RETURNING id
                 """),
-                {
-                    "task_id": task_id,
-                    "filename": filename,
-                    "file_path": file_path,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "duration": duration,
-                    "text": text,
-                    "relevance_score": relevance_score,
-                    "reasoning": reasoning,
-                    "clip_order": clip_order,
-                    "virality_score": virality_score,
-                    "hook_score": hook_score,
-                    "engagement_score": engagement_score,
-                    "value_score": value_score,
-                    "shareability_score": shareability_score,
-                    "hook_type": hook_type,
-                },
+                params_full,
             )
         except Exception:
             await db.rollback()
             result = await db.execute(
                 sa_text("""
                     INSERT INTO generated_clips
-                    (task_id, filename, file_path, start_time, end_time, duration,
+                    (id, task_id, filename, file_path, start_time, end_time, duration,
                      text, relevance_score, reasoning, clip_order, created_at)
                     VALUES
-                    (:task_id, :filename, :file_path, :start_time, :end_time, :duration,
+                    (:id, :task_id, :filename, :file_path, :start_time, :end_time, :duration,
                      :text, :relevance_score, :reasoning, :clip_order, NOW())
                     RETURNING id
                 """),
-                {
-                    "task_id": task_id,
-                    "filename": filename,
-                    "file_path": file_path,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "duration": duration,
-                    "text": text,
-                    "relevance_score": relevance_score,
-                    "reasoning": reasoning,
-                    "clip_order": clip_order,
-                },
+                params_legacy,
             )
-        clip_id = result.scalar()
-        if not clip_id:
+        row_id = result.scalar()
+        if not row_id:
             raise RuntimeError("Failed to create clip: no ID returned")
-        logger.debug(f"Created clip {clip_id} for task {task_id}")
-        return str(clip_id)
+        logger.debug(f"Created clip {row_id} for task {task_id}")
+        return str(row_id)
 
     @staticmethod
     async def get_clips_by_task(db: AsyncSession, task_id: str) -> List[Dict[str, Any]]:

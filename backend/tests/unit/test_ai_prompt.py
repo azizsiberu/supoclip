@@ -11,6 +11,10 @@ from src.ai import (
 
 
 def test_system_prompt_enforces_grounding_rules():
+    assert "STRUCTURED OUTPUT (MANDATORY" in transcript_analysis_system_prompt
+    assert "first non-whitespace character MUST be" in (
+        transcript_analysis_system_prompt
+    )
     assert "extraction and ranking, not creative rewriting" in (
         transcript_analysis_system_prompt
     )
@@ -35,6 +39,7 @@ def test_build_transcript_analysis_prompt_requires_transcript_fidelity():
     assert "If there is a tradeoff between \"viral\" and \"accurate\", choose accuracy." in prompt
     assert "Do not reject or penalize a segment simply because of the subject matter" in prompt
     assert "[00:12 - 00:21] A strong opening line" in prompt
+    assert "raw JSON only" in prompt
 
 
 def test_build_transcript_analysis_prompt_mentions_broll_only_when_enabled():

@@ -113,3 +113,31 @@ Notes:
 - `videos.list` costs 1 quota unit per request in the YouTube Data API.
 - The public API does not expose some `yt-dlp`-specific metadata fields like `format_id`, `resolution`, `fps`, or file size.
 - Enable the YouTube Data API v3 for your Google Cloud project before using this mode.
+
+## Vertical clip face framing (9:16 crop)
+
+Clip export uses face-aware centering when `output_format` is `vertical` (see [`video_utils.detect_faces_in_clip`](src/video_utils.py)).
+
+Order of detection:
+
+1. **MediaPipe** — only when the installed wheel still exposes `mediapipe.solutions.face_detection` (some newer PyPI builds omit legacy `solutions`).
+2. **OpenCV DNN** — if TensorFlow `.pb` + `.pbtxt` are available.
+3. **OpenCV Haar** — fallback; parameters are tuned to reduce false positives.
+
+### Optional: OpenCV DNN weights (recommended for stable framing)
+
+Download the OpenCV sample face detector:
+
+- Model weights: [opencv_face_detector_uint8.pb](https://raw.githubusercontent.com/opencv/opencv_3rdparty/8033c2bc31b3256f0d461c919ecc01c2428ca03b/opencv_face_detector_uint8.pb) (pinned commit from `opencv_3rdparty`)
+- Network definition: [opencv_face_detector.pbtxt](https://raw.githubusercontent.com/opencv/opencv/4.x/samples/dnn/face_detector/opencv_face_detector.pbtxt) (from `opencv` samples)
+
+Place them anywhere on disk, then point the worker at them:
+
+```env
+OPENCV_FACE_DETECTOR_MODEL_PATH=/absolute/path/to/opencv_face_detector_uint8.pb
+OPENCV_FACE_DETECTOR_PROTO_PATH=/absolute/path/to/opencv_face_detector.pbtxt
+```
+
+If these are unset, the code still checks the default paths next to OpenCV’s Haar data (they are usually missing in a stock `opencv-python` install, so DNN is skipped until you download the files).
+
+This is unrelated to free vs paid users; framing quality depends on detectors and source video, not billing tier.
