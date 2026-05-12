@@ -30,6 +30,10 @@ interface BillingSummary {
   usage_count: number;
   usage_limit: number | null;
   remaining: number | null;
+  usage_seconds?: number;
+  credits_limit_seconds?: number | null;
+  remaining_credits_seconds?: number | null;
+  error_code?: string | null;
 }
 
 export default function SettingsPage() {
@@ -162,6 +166,13 @@ export default function SettingsPage() {
     } finally {
       setIsBillingActionLoading(false);
     }
+  };
+
+  const formatSeconds = (value: number) => {
+    const safe = Math.max(0, Math.floor(value));
+    const minutes = Math.floor(safe / 60);
+    const seconds = safe % 60;
+    return `${minutes}m ${seconds}s`;
   };
 
   const handleSavePreferences = async () => {
@@ -468,6 +479,11 @@ export default function SettingsPage() {
                       ? `${billingSummary.usage_count} generations in this billing period`
                       : `${billingSummary.usage_count}/${billingSummary.usage_limit} generations used this period`}
                   </p>
+                  {billingSummary.plan !== "pro" && billingSummary.credits_limit_seconds !== null && billingSummary.credits_limit_seconds !== undefined && (
+                    <p className="text-sm text-gray-600">
+                      Credits: {formatSeconds(billingSummary.remaining_credits_seconds ?? 0)} / {formatSeconds(billingSummary.credits_limit_seconds)}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 capitalize">
                     Plan: {billingSummary.plan} ({billingSummary.subscription_status})
                   </p>

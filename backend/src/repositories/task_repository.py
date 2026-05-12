@@ -450,3 +450,36 @@ class TaskRepository:
         )
         await db.commit()
         return result.fetchone() is not None
+
+    @staticmethod
+    async def create_usage_entry(
+        db: AsyncSession,
+        user_id: str,
+        task_id: str,
+        usage_seconds: int,
+        source_type: Optional[str] = None,
+        provider: Optional[str] = None,
+    ) -> None:
+        if usage_seconds <= 0:
+            return
+        await db.execute(
+            text(
+                """
+                INSERT INTO usage_ledger (
+                    id, user_id, task_id, usage_seconds, source_type, provider, created_at
+                )
+                VALUES (
+                    :id, :user_id, :task_id, :usage_seconds, :source_type, :provider, NOW()
+                )
+                """
+            ),
+            {
+                "id": str(uuid4()),
+                "user_id": user_id,
+                "task_id": task_id,
+                "usage_seconds": int(usage_seconds),
+                "source_type": source_type,
+                "provider": provider,
+            },
+        )
+        await db.commit()

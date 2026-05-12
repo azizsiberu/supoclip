@@ -45,12 +45,15 @@ model User {
   billing_period_start DateTime? @db.Timestamptz
   billing_period_end   DateTime? @db.Timestamptz
   trial_ends_at        DateTime? @db.Timestamptz
+  trial_credits_seconds Int      @default(1800)
+  plan_expires_at      DateTime? @db.Timestamptz
 
   // Relationships
   tasks         Task[]
   sessions      Session[]
   accounts      Account[]
   app_settings  AppSetting[]
+  usage_ledger  UsageLedger[]
 
   @@map("users")
 }
@@ -161,4 +164,20 @@ model StripeWebhookEvent {
   created_at DateTime @default(now()) @db.Timestamptz
 
   @@map("stripe_webhook_events")
+}
+
+model UsageLedger {
+  id            String   @id @default(uuid())
+  user_id       String
+  task_id       String?
+  usage_seconds Int
+  source_type   String?  @db.VarChar(20)
+  provider      String?  @db.VarChar(50)
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at])
+  @@index([task_id])
+  @@map("usage_ledger")
 }

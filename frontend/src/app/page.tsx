@@ -38,6 +38,10 @@ interface BillingSummary {
   usage_count: number;
   usage_limit: number | null;
   remaining: number | null;
+  usage_seconds?: number;
+  credits_limit_seconds?: number | null;
+  remaining_credits_seconds?: number | null;
+  error_code?: string | null;
   can_create_task: boolean;
   upgrade_required: boolean;
   reason: string | null;
@@ -363,6 +367,34 @@ export default function Home() {
     !billingSummary?.monetization_enabled ||
     (billingSummary.plan === "pro" && ["active", "trialing"].includes(billingSummary.subscription_status));
 
+  const usageProgressPercent = (() => {
+    if (!billingSummary) return 0;
+    if (billingSummary.plan !== "pro" && billingSummary.credits_limit_seconds) {
+      const used = Math.max(
+        0,
+        billingSummary.credits_limit_seconds - (billingSummary.remaining_credits_seconds ?? 0)
+      );
+      return Math.min((used / billingSummary.credits_limit_seconds) * 100, 100);
+    }
+    if (billingSummary.usage_limit) {
+      return Math.min((billingSummary.usage_count / billingSummary.usage_limit) * 100, 100);
+    }
+    return 0;
+  })();
+
+  const usageLabel = (() => {
+    if (!billingSummary) return "";
+    if (billingSummary.plan !== "pro" && billingSummary.credits_limit_seconds !== null && billingSummary.credits_limit_seconds !== undefined) {
+      const remaining = Math.max(0, Math.floor(billingSummary.remaining_credits_seconds ?? 0));
+      const minutes = Math.floor(remaining / 60);
+      return `${minutes}m left`;
+    }
+    if (billingSummary.usage_limit) {
+      return `${billingSummary.usage_count}/${billingSummary.usage_limit}`;
+    }
+    return `${billingSummary.usage_count}`;
+  })();
+
   const handleSignOut = async () => {
     await signOut();
     window.location.href = "/sign-in";
@@ -561,22 +593,17 @@ export default function Home() {
                     <div className="w-16 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          billingSummary.usage_limit &&
-                          billingSummary.usage_count / billingSummary.usage_limit > 0.8
+                          usageProgressPercent > 80
                             ? "bg-red-500"
                             : "bg-stone-900"
                         }`}
                         style={{
-                          width: billingSummary.usage_limit
-                            ? `${Math.min((billingSummary.usage_count / billingSummary.usage_limit) * 100, 100)}%`
-                            : "0%",
+                          width: `${usageProgressPercent}%`,
                         }}
                       />
                     </div>
                     <span className="text-[11px] text-stone-500 tabular-nums whitespace-nowrap">
-                      {billingSummary.usage_limit
-                        ? `${billingSummary.usage_count}/${billingSummary.usage_limit}`
-                        : `${billingSummary.usage_count}`}
+                      {usageLabel}
                     </span>
                   </div>
                 </div>
@@ -666,22 +693,17 @@ export default function Home() {
                   <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        billingSummary.usage_limit &&
-                        billingSummary.usage_count / billingSummary.usage_limit > 0.8
+                        usageProgressPercent > 80
                           ? "bg-red-500"
                           : "bg-stone-900"
                       }`}
                       style={{
-                        width: billingSummary.usage_limit
-                          ? `${Math.min((billingSummary.usage_count / billingSummary.usage_limit) * 100, 100)}%`
-                          : "0%",
+                        width: `${usageProgressPercent}%`,
                       }}
                     />
                   </div>
                   <span className="text-xs text-stone-500 tabular-nums whitespace-nowrap">
-                    {billingSummary.usage_limit
-                      ? `${billingSummary.usage_count}/${billingSummary.usage_limit}`
-                      : `${billingSummary.usage_count}`}
+                    {usageLabel}
                   </span>
                 </div>
               )}

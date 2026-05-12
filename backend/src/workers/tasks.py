@@ -79,6 +79,7 @@ async def process_video_task(
             # Process the video
             result = await task_service.process_task(
                 task_id=task_id,
+                user_id=user_id,
                 url=url,
                 source_type=source_type,
                 font_family=font_family,

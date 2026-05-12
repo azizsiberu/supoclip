@@ -319,6 +319,7 @@ class VideoService:
         """
         try:
             runtime_config = get_config()
+            input_duration_seconds = 0
             # Step 1: Get video path (download or use existing)
             if should_cancel and await should_cancel():
                 raise Exception("Task cancelled")
@@ -330,6 +331,8 @@ class VideoService:
                 video_info = await async_get_youtube_video_info(url, task_id=task_id)
                 if video_info:
                     duration = video_info.get("duration", 0)
+                    if duration:
+                        input_duration_seconds = int(duration)
                     if duration and duration > runtime_config.max_video_duration:
                         mins = runtime_config.max_video_duration // 60
                         raise Exception(
@@ -347,6 +350,8 @@ class VideoService:
 
             # Post-download duration guard (catches cases where preflight info was unavailable)
             file_duration = VideoService._get_file_duration(video_path)
+            if file_duration:
+                input_duration_seconds = int(file_duration)
             if file_duration and file_duration > runtime_config.max_video_duration:
                 mins = runtime_config.max_video_duration // 60
                 raise Exception(
@@ -454,6 +459,7 @@ class VideoService:
                         "most_relevant_segments": segments_json,
                     }
                 ),
+                "usage_seconds": max(1, int(input_duration_seconds or 0)),
             }
 
         except Exception as e:

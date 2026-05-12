@@ -63,6 +63,9 @@ class Config:
         )
         self.free_plan_task_limit = int(os.getenv("FREE_PLAN_TASK_LIMIT", "10"))
         self.pro_plan_task_limit = int(os.getenv("PRO_PLAN_TASK_LIMIT", "0"))
+        self.free_plan_credits_seconds = int(
+            os.getenv("FREE_PLAN_CREDITS_SECONDS", "1800")
+        )
         self.cors_origins = self._get_csv_env(
             "CORS_ORIGINS",
             [

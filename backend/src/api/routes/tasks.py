@@ -207,6 +207,8 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     try:
         billing_service = BillingService(db)
         await billing_service.assert_can_create_task(user_id)
+        if include_broll:
+            await billing_service.assert_feature_access(user_id, "broll")
 
         task_service = TaskService(db)
 
@@ -271,11 +273,16 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except BillingLimitExceeded as e:
+        message_by_code = {
+            "upgrade_required": "Upgrade required for this feature.",
+            "plan_limit_exceeded": "Plan task limit reached for current period.",
+            "quota_exceeded": "Free plan credits exhausted.",
+        }
         raise HTTPException(
             status_code=402,
             detail={
-                "code": "SUBSCRIPTION_REQUIRED",
-                "message": "Active subscription required to create tasks.",
+                "code": e.code,
+                "message": message_by_code.get(e.code, "Billing limit reached."),
                 "billing": e.summary,
             },
         )
@@ -562,6 +569,15 @@ async def trim_clip(
         return {"clip": updated_clip}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except BillingLimitExceeded as e:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "code": e.code,
+                "message": "Upgrade required for this feature.",
+                "billing": e.summary,
+            },
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -709,6 +725,9 @@ async def apply_task_settings(
         task_record = await task_service.task_repo.get_task_by_id(db, task_id)
         if not task_record:
             raise HTTPException(status_code=404, detail="Task not found")
+        if include_broll:
+            billing_service = BillingService(db)
+            await billing_service.assert_feature_access(task_record["user_id"], "broll")
         if not is_font_accessible(font_family, task_record["user_id"]):
             raise HTTPException(
                 status_code=400, detail="Selected font is not available"
@@ -802,6 +821,8 @@ async def cancel_task(
     try:
         task_service = TaskService(db)
         task = await _require_task_owner(request, task_service, db, task_id)
+        billing_service = BillingService(db)
+        await billing_service.assert_can_create_task(task["user_id"])
 
         if task.get("status") in ["completed", "error", "cancelled"]:
             return {"message": f"Task already in terminal state: {task.get('status')}"}
@@ -935,6 +956,15 @@ async def resume_task(
         return {"message": "Task resumed", "job_id": job_id}
     except HTTPException:
         raise
+    except BillingLimitExceeded as e:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "code": e.code,
+                "message": "Plan limit reached for resume request.",
+                "billing": e.summary,
+            },
+        )
     except Exception as e:
         logger.error(f"Error resuming task: {e}")
         raise HTTPException(status_code=500, detail=f"Error resuming task: {str(e)}")

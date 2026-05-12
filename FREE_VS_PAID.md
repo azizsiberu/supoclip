@@ -131,24 +131,24 @@ Bagian ini adalah checklist end-to-end supaya free/paid beneran ke-apply.
 
 ### 5.1 Database & User model
 
-- [ ] Tambah field user: `plan` (FREE/PRO)
+- [x] Tambah field user: `plan` (FREE/PRO)
 - [ ] Tambah field optional: `plan_expires_at`, `trial_credits_seconds`
 - [ ] Buat usage ledger (disarankan): catat pemakaian “processing seconds” per user per periode
-- [ ] Pastikan signup/default user = FREE
+- [x] Pastikan signup/default user = FREE
 
 ### 5.2 Backend API gating (Wajib server-side)
 
 Semua endpoint yang memicu biaya harus enforce:
 
-- [ ] **Create task**: cek durasi input, max clips, mode processing
+- [x] **Create task**: cek durasi input, max clips, mode processing *(partial: create task + duration guard sudah ada; max clips masih belum enforce per plan)*
 - [ ] **Queue**: cek concurrency per user + set priority
 - [ ] **Render/export**: cek resolution, watermark rule, rerender limit
-- [ ] **B-roll**: cek `PEXELS_API_KEY` + entitlement plan
+- [x] **B-roll**: cek `PEXELS_API_KEY` + entitlement plan *(partial: baru cek `PEXELS_API_KEY`, belum entitlement plan)*
 - [ ] **LLM calls**: cek entitlement plan + quota
 
 Error shape yang konsisten:
 
-- [ ] `upgrade_required`
+- [x] `upgrade_required` *(sudah ada di billing summary)*
 - [ ] `plan_limit_exceeded`
 - [ ] `quota_exceeded`
 
@@ -164,8 +164,8 @@ Di `backend/src/config.py` sudah ada:
 
 Checklist:
 
-- [ ] Pastikan `FREE_PLAN_TASK_LIMIT` / `PRO_PLAN_TASK_LIMIT` dipakai dari **plan user**, bukan hardcode global.
-- [ ] Pisahkan “limit sistem” (ENV) vs “limit plan” (DB/entitlements).
+- [x] Pastikan `FREE_PLAN_TASK_LIMIT` / `PRO_PLAN_TASK_LIMIT` dipakai dari **plan user**, bukan hardcode global.
+- [x] Pisahkan “limit sistem” (ENV) vs “limit plan” (DB/entitlements). *(partial: sebagian sudah dipisah, entitlements detail per plan belum lengkap)*
 
 ### 5.4 Worker / queue priority
 
@@ -185,16 +185,16 @@ Repo pakai ARQ worker (lihat `CLAUDE.md`).
 
 Di repo, settings page sudah menampilkan billing summary.
 
-- [ ] Tampilkan plan badge (FREE/PRO) + quota meter
-- [ ] Saat user kena limit: tampilkan CTA upgrade (Stripe checkout)
+- [x] Tampilkan plan badge (FREE/PRO) + quota meter *(partial: info plan + usage ada, badge/quota meter dedicated belum)*
+- [x] Saat user kena limit: tampilkan CTA upgrade (Stripe checkout) *(partial: CTA upgrade sudah ada di settings)*
 - [ ] Feature gating di UI (tapi tetap enforce di backend)
 
 ### 5.7 Billing (Stripe) & Webhooks
 
-- [ ] Stripe subscription untuk PRO
-- [ ] Webhook update `users.plan`
-- [ ] Portal untuk manage subscription
-- [ ] Email lifecycle via Resend (repo sudah mention ini)
+- [x] Stripe subscription untuk PRO
+- [x] Webhook update `users.plan`
+- [x] Portal untuk manage subscription
+- [x] Email lifecycle via Resend (repo sudah mention ini)
 
 ### 5.8 Observability
 

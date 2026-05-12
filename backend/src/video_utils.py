@@ -99,17 +99,31 @@ def get_video_transcript(video_path: Path, speech_model: str = "best") -> str:
     aai.settings.api_key = get_config().assembly_ai_api_key
     transcriber = aai.Transcriber()
 
-    # Request word-level timestamps for precise subtitle sync
-    speech_model_value = aai.SpeechModel.best
+    # Request word-level timestamps for precise subtitle sync.
+    # AssemblyAI deprecated `speech_model` in favor of `speech_models`.
+    config_kwargs: Dict[str, Any] = {
+        "speaker_labels": True,
+        "punctuate": True,
+        "format_text": True,
+    }
     if speech_model == "nano":
-        speech_model_value = aai.SpeechModel.nano
+        # AssemblyAI currently accepts universal-2 / universal-3-pro.
+        config_kwargs["speech_models"] = ["universal-2"]
+    else:
+        config_kwargs["speech_models"] = ["universal-3-pro"]
 
-    config_obj = aai.TranscriptionConfig(
-        speaker_labels=True,
-        punctuate=True,
-        format_text=True,
-        speech_model=speech_model_value,
-    )
+    try:
+        config_obj = aai.TranscriptionConfig(**config_kwargs)
+    except TypeError:
+        # Backward compatibility for older SDKs that only support defaults.
+        logger.warning(
+            "AssemblyAI SDK does not support speech_models; using default transcription config"
+        )
+        config_obj = aai.TranscriptionConfig(
+            speaker_labels=True,
+            punctuate=True,
+            format_text=True,
+        )
 
     try:
         logger.info("Starting AssemblyAI transcription")

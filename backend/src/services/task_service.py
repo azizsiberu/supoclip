@@ -22,6 +22,7 @@ from .task_completion_email_service import (
     TaskCompletionEmailService,
     TaskCompletionRecipient,
 )
+from .billing_service import BillingService
 from ..config import Config, get_config
 from ..clip_editor import (
     trim_clip_file,
@@ -135,6 +136,7 @@ class TaskService:
     async def process_task(
         self,
         task_id: str,
+        user_id: str,
         url: str,
         source_type: str,
         font_family: str = "TikTokSans-Regular",
@@ -199,6 +201,8 @@ class TaskService:
                     await progress_callback(progress, message, status)
 
             # Process video with progress updates
+            billing_service = BillingService(self.db, self.config)
+            await billing_service.assert_feature_access(user_id, "llm")
             pipeline_start = perf_counter()
             result = await self.video_service.process_video_complete(
                 url=url,
@@ -330,6 +334,18 @@ class TaskService:
                 completed_at=datetime.utcnow(),
                 stage_timings_json=json.dumps(stage_timings),
                 error_code="",
+            )
+            await self.task_repo.create_usage_entry(
+                self.db,
+                user_id=user_id,
+                task_id=task_id,
+                usage_seconds=int(result.get("usage_seconds", 0)),
+                source_type=source_type,
+                provider=(
+                    self.config.youtube_download_provider
+                    if source_type == "youtube"
+                    else "upload"
+                ),
             )
             await self._send_completion_notification_if_needed(
                 task_id=task_id,

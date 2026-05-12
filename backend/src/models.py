@@ -78,10 +78,19 @@ class User(Base):
     trial_ends_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    trial_credits_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=sql_text("'1800'")
+    )
+    plan_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Relationships
     tasks: Mapped[List["Task"]] = relationship(
         "Task", back_populates="user", cascade="all, delete-orphan"
+    )
+    usage_entries: Mapped[List["UsageLedger"]] = relationship(
+        "UsageLedger", back_populates="user", cascade="all, delete-orphan"
     )
 
 
@@ -277,3 +286,23 @@ class ProcessingCache(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class UsageLedger(Base):
+    __tablename__ = "usage_ledger"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=generate_uuid_string
+    )
+    user_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    task_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    usage_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="usage_entries")
